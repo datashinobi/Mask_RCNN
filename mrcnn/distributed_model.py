@@ -30,7 +30,9 @@ from distutils.version import LooseVersion
 assert LooseVersion(tf.__version__) >= LooseVersion("1.3")
 assert LooseVersion(keras.__version__) >= LooseVersion('2.0.8')
 
+import horovod.keras as hvd
 
+from azureml.core import Run
 ############################################################
 #  Utility Functions
 ############################################################
@@ -815,9 +817,10 @@ class DetectionLayer(KE.Layer):
         # Reshape output
         # [batch, num_detections, (y1, x1, y2, x2, class_id, class_score)] in
         # normalized coordinates
+        #https://github.com/matterport/Mask_RCNN/pull/1082/files
         return tf.reshape(
             detections_batch,
-            [self.config.BATCH_SIZE, self.config.DETECTION_MAX_INSTANCES, 6])
+            [self.config.IMAGES_PER_GPU, self.config.DETECTION_MAX_INSTANCES, 6])
 
     def compute_output_shape(self, input_shape):
         return (None, self.config.DETECTION_MAX_INSTANCES, 6)
@@ -1829,11 +1832,20 @@ class MaskRCNN():
         config: A Sub-class of the Config class
         model_dir: Directory to save training logs and trained weights
         """
+       # Azure ML run 
+        self.run = Run.get_context() 
+        
         assert mode in ['training', 'inference']
         self.mode = mode
         self.config = config
-        self.model_dir = model_dir
-        self.set_log_dir()
+
+        self.model_dir = 'logs'
+        os.makedirs(self.model_dir,exist_ok=True)
+        self.set_log_dir(self.model_dir)
+
+        #horovod
+        hvd.init() 
+
         self.keras_model = self.build(mode=mode, config=config)
 
     def build(self, mode, config):
@@ -2155,9 +2167,13 @@ class MaskRCNN():
         metrics. Then calls the Keras compile() function.
         """
         # Optimizer object
+        learning_rate = learning_rate *hvd.size()
+
         optimizer = keras.optimizers.SGD(
             lr=learning_rate, momentum=momentum,
             clipnorm=self.config.GRADIENT_CLIP_NORM)
+        optimizer = hvd.DistributedOptimizer(optimizer)
+
         # Add Losses
         # First, clear previously set losses to avoid duplication
         self.keras_model._losses = []
@@ -2337,11 +2353,15 @@ class MaskRCNN():
 
         # Callbacks
         callbacks = [
-            keras.callbacks.TensorBoard(log_dir=self.log_dir,
-                                        histogram_freq=0, write_graph=True, write_images=False),
-            keras.callbacks.ModelCheckpoint(self.checkpoint_path,
-                                            verbose=0, save_weights_only=True),
+            hvd.callbacks.BroadcastGlobalVariablesCallback(0)
+
         ]
+        # Horovod: save checkpoints & write tensorboard logs only on rank 0 
+        if hvd.rank() == 0:
+            keras.callbacks.append(keras.callbacks.ModelCheckpoint(self.checkpoint_path,
+                                            verbose=0, save_weights_only=True))
+            keras.callbacks.TensorBoard(log_dir=self.log_dir,
+                                        histogram_freq=0, write_graph=True, write_images=False)
 
         # Add custom callbacks to the list
         if custom_callbacks:
@@ -2361,6 +2381,9 @@ class MaskRCNN():
         else:
             workers = multiprocessing.cpu_count()
 
+       # horovod adjust epochs according to ring size 
+        epochs = epochs = int(math.ceil(epochs/ hvd.size()))
+        
         self.keras_model.fit_generator(
             train_generator,
             initial_epoch=self.epoch,
