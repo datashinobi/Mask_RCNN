@@ -30,6 +30,7 @@ from distutils.version import LooseVersion
 assert LooseVersion(tf.__version__) >= LooseVersion("1.3")
 assert LooseVersion(keras.__version__) >= LooseVersion('2.0.8')
 
+import horovod.keras as hvd
 
 ############################################################
 #  Utility Functions
@@ -2156,9 +2157,13 @@ class MaskRCNN():
         metrics. Then calls the Keras compile() function.
         """
         # Optimizer object
+        learning_rate = learning_rate *hvd.size()
+
         optimizer = keras.optimizers.SGD(
             lr=learning_rate, momentum=momentum,
             clipnorm=self.config.GRADIENT_CLIP_NORM)
+        optimizer = hvd.DistributedOptimizer(optimizer)
+
         # Add Losses
         # First, clear previously set losses to avoid duplication
         self.keras_model._losses = []
@@ -2338,11 +2343,15 @@ class MaskRCNN():
 
         # Callbacks
         callbacks = [
-            keras.callbacks.TensorBoard(log_dir=self.log_dir,
-                                        histogram_freq=0, write_graph=True, write_images=False),
-            keras.callbacks.ModelCheckpoint(self.checkpoint_path,
-                                            verbose=0, save_weights_only=True),
+            hvd.callbacks.BroadcastGlobalVariablesCallback(0)
+
         ]
+        # Horovod: save checkpoints & write tensorboard logs only on rank 0 
+        if hvd.rank() == 0:
+            keras.callbacks.append(keras.callbacks.ModelCheckpoint(self.checkpoint_path,
+                                            verbose=0, save_weights_only=True))
+            keras.callbacks.TensorBoard(log_dir=self.log_dir,
+                                        histogram_freq=0, write_graph=True, write_images=False)
 
         # Add custom callbacks to the list
         if custom_callbacks:
@@ -2362,6 +2371,8 @@ class MaskRCNN():
         else:
             workers = multiprocessing.cpu_count()
 
+       # horovod adjust epochs according to ring size 
+        epochs = epochs = int(math.ceil(epochs/ hvd.size()))
         self.keras_model.fit_generator(
             train_generator,
             initial_epoch=self.epoch,
