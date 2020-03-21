@@ -32,6 +32,7 @@ assert LooseVersion(keras.__version__) >= LooseVersion('2.0.8')
 
 import horovod.keras as hvd
 
+from azureml.core import Run
 ############################################################
 #  Utility Functions
 ############################################################
@@ -1831,11 +1832,20 @@ class MaskRCNN():
         config: A Sub-class of the Config class
         model_dir: Directory to save training logs and trained weights
         """
+       # Azure ML run 
+        self.run = Run.get_context() 
+        
         assert mode in ['training', 'inference']
         self.mode = mode
         self.config = config
-        self.model_dir = model_dir
-        self.set_log_dir()
+
+        self.model_dir = 'logs'
+        os.makedirs(self.model_dir,exist_ok=True)
+        self.set_log_dir(self.model_dir)
+
+        #horovod
+        hvd.init() 
+
         self.keras_model = self.build(mode=mode, config=config)
 
     def build(self, mode, config):
@@ -2373,6 +2383,7 @@ class MaskRCNN():
 
        # horovod adjust epochs according to ring size 
         epochs = epochs = int(math.ceil(epochs/ hvd.size()))
+        
         self.keras_model.fit_generator(
             train_generator,
             initial_epoch=self.epoch,
