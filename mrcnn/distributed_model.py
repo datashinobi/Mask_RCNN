@@ -1838,8 +1838,7 @@ class MaskRCNN():
         assert mode in ['training', 'inference']
         self.mode = mode
         self.config = config
-
-        
+        self.model_dir = model_dir
         self.set_log_dir(model_dir)
 
         #horovod
