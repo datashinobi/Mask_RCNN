@@ -1840,7 +1840,7 @@ class MaskRCNN():
         self.config = config
 
         
-        self.set_log_dir(self.model_dir)
+        self.set_log_dir(model_dir)
 
         #horovod
         hvd.init() 
