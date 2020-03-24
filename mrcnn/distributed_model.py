@@ -1846,7 +1846,7 @@ class MaskRCNN():
 
         tf_config = tf.ConfigProto()
         tf_config.gpu_options.allow_growth = True
-        tf_config.gpu_options.visible_device_list = str(hvd.local_rank()) if self.config.GPU_COUNT == 1 else
+        tf_config.gpu_options.visible_device_list = str(hvd.local_rank()) if self.config.GPU_COUNT == 1 else\ 
                         '%d,%d' % (hvd.local_rank() * self.config.GPU_COUNT, hvd.local_rank() * self.config.GPU_COUNT + 1)
         K.set_session(tf.Session(config=tf_config))
 
