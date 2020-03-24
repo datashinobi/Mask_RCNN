@@ -1,6 +1,6 @@
 """
 Mask R-CNN
-The main Mask R-CNN model implementation enabled for distributed training using horovod on Azure Machine Learning
+The main Mask R-CNN model implementation enabled for distributed training using horovod 
 
 Copyright (c) 2017 Matterport, Inc.
 Licensed under the MIT License (see LICENSE for details)
@@ -32,7 +32,7 @@ assert LooseVersion(keras.__version__) >= LooseVersion('2.0.8')
 
 import horovod.keras as hvd
 
-from azureml.core import Run
+
 ############################################################
 #  Utility Functions
 ############################################################
@@ -1843,6 +1843,7 @@ class MaskRCNN():
 
         
         hvd.init() 
+
         tf_config = tf.ConfigProto()
         tf_config.gpu_options.allow_growth = True
         tf_config.allow_soft_placement = True
@@ -2175,7 +2176,7 @@ class MaskRCNN():
         metrics. Then calls the Keras compile() function.
         """
         # Optimizer object
-        learning_rate = learning_rate *hvd.size()
+        learning_rate = learning_rate * hvd.size()
 
         optimizer = keras.optimizers.SGD(
             lr=learning_rate, momentum=momentum,
@@ -2361,7 +2362,8 @@ class MaskRCNN():
 
         # Callbacks
         callbacks = [
-            hvd.callbacks.BroadcastGlobalVariablesCallback(0)
+            hvd.callbacks.BroadcastGlobalVariablesCallback(0),
+            hvd.callbacks.LearningRateWarmupCallback(warmup_epochs=5)
 
         ]
         # Horovod: save checkpoints & write tensorboard logs only on rank 0 
