@@ -1841,7 +1841,9 @@ class MaskRCNN():
         self.model_dir = model_dir
         self.set_log_dir(model_dir)
 
-        
+        import os
+        for item, value in os.environ.items():
+            print('{}: {}'.format(item, value))
         hvd.init() 
 
         tf_config = tf.ConfigProto()
