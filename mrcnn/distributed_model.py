@@ -1847,7 +1847,7 @@ class MaskRCNN():
         config = tf.ConfigProto()
         config.gpu_options.allow_growth = True
         config.gpu_options.visible_device_list = \
-                        '%d,%d' % (hvd.local_rank() * self.config.GPU_COUNT, hvd.local_rank() * self.config.GPU_COUNT, + 1)
+                        '%d,%d' % (hvd.local_rank() * self.config.GPU_COUNT, hvd.local_rank() * self.config.GPU_COUNT + 1)
         K.set_session(tf.Session(config=config))
 
         self.keras_model = self.build(mode=mode, config=config)
