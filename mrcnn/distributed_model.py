@@ -1841,25 +1841,20 @@ class MaskRCNN():
         self.model_dir = model_dir
         self.set_log_dir(model_dir)
 
-        import os
-        for item, value in os.environ.items():
-            print('{}: {}'.format(item, value))
-        hvd.init() 
-        print("which mpirun ", os.system('which mpirun'))
-        print("which mpicc ", os.system('which mpicc'))
         
+        hvd.init() 
+
         tf_config = tf.ConfigProto()
         tf_config.gpu_options.allow_growth = True
         tf_config.allow_soft_placement = True
-        print('visible gpu',tf_config.gpu_options.visible_device_list)
+
         device_list =''
         if self.config.GPU_COUNT == 1:
-            device_list = str(os.environ['AZ_BATCHAI_TASK_INDEX'])#)str(hvd.local_rank())
+            print('ONE GPU')
+            device_list = str(hvd.local_rank())
         else:
             device_list = '%d,%d' % (hvd.local_rank() * self.config.GPU_COUNT, hvd.local_rank() * self.config.GPU_COUNT + 1)
-        
-        print('local rank',device_list)
-
+    
         tf_config.gpu_options.visible_device_list = device_list
         K.set_session(tf.Session(config=tf_config))
 
