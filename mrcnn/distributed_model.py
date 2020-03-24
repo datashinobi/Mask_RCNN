@@ -1846,6 +1846,7 @@ class MaskRCNN():
 
         tf_config = tf.ConfigProto()
         tf_config.gpu_options.allow_growth = True
+        tf_config.allow_soft_placement = True
         device_list =''
         if self.config.GPU_COUNT == 1:
             device_list = str(hvd.local_rank())
