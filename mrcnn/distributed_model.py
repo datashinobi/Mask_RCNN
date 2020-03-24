@@ -2,7 +2,7 @@
 Mask R-CNN
 The main Mask R-CNN model implementation 
 
-Added distributed training using horovod 
+Yassine: Added distributed training using horovod 
 
 Copyright (c) 2017 Matterport, Inc.
 Licensed under the MIT License (see LICENSE for details)
