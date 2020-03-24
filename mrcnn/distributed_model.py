@@ -1831,7 +1831,7 @@ class MaskRCNN():
         mode: Either "training" or "inference"
         config: A Sub-class of the Config class
         model_dir: Directory to save training logs and trained weights
-        
+        is_distributed: wether to train distributed mode using horovod
         """
        
         
@@ -1842,7 +1842,7 @@ class MaskRCNN():
         self.set_log_dir(model_dir)
 
         
-        if is_distributed:
+        if is_distributed and mode is 'training':
             #horovod
             hvd.init() 
 
