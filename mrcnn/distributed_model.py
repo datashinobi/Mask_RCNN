@@ -1845,7 +1845,9 @@ class MaskRCNN():
         for item, value in os.environ.items():
             print('{}: {}'.format(item, value))
         hvd.init() 
-
+        print("which mpirun ", os.system('which mpirun'))
+        print("which mpicc ", os.system('which mpicc'))
+        
         tf_config = tf.ConfigProto()
         tf_config.gpu_options.allow_growth = True
         tf_config.allow_soft_placement = True
