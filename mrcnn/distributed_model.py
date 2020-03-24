@@ -1847,14 +1847,14 @@ class MaskRCNN():
         tf_config = tf.ConfigProto()
         tf_config.gpu_options.allow_growth = True
         tf_config.allow_soft_placement = True
-        print(tf_config.gpu_options.visible_device_list)
+        print('visible gpu',tf_config.gpu_options.visible_device_list)
         device_list =''
         if self.config.GPU_COUNT == 1:
             device_list = str(hvd.local_rank())
         else:
             device_list = '%d,%d' % (hvd.local_rank() * self.config.GPU_COUNT, hvd.local_rank() * self.config.GPU_COUNT + 1)
         
-        print('visible gpus',device_list)
+        print('local rank',device_list)
 
         tf_config.gpu_options.visible_device_list = device_list
         K.set_session(tf.Session(config=tf_config))
