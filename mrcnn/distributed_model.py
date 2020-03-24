@@ -2368,10 +2368,10 @@ class MaskRCNN():
         ]
         # Horovod: save checkpoints & write tensorboard logs only on rank 0 
         if hvd.rank() == 0:
-            keras.callbacks.append(keras.callbacks.ModelCheckpoint(self.checkpoint_path,
+            callbacks.append(keras.callbacks.ModelCheckpoint(self.checkpoint_path,
                                             verbose=0, save_weights_only=True))
-            keras.callbacks.TensorBoard(log_dir=self.log_dir,
-                                        histogram_freq=0, write_graph=True, write_images=False)
+            callbacks.append(keras.callbacks.TensorBoard(log_dir=self.log_dir,
+                                        histogram_freq=0, write_graph=True, write_images=False))
 
         # Add custom callbacks to the list
         if custom_callbacks:
