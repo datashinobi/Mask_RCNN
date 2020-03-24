@@ -1826,7 +1826,7 @@ class MaskRCNN():
     The actual Keras model is in the keras_model property.
     """
 
-    def __init__(self, mode, config, model_dir):
+    def __init__(self, mode, config, model_dir, is_distributed):
         """
         mode: Either "training" or "inference"
         config: A Sub-class of the Config class
@@ -1841,20 +1841,22 @@ class MaskRCNN():
         self.model_dir = model_dir
         self.set_log_dir(model_dir)
 
-        #horovod
-        hvd.init() 
+        
+        if is_distributed:
+            #horovod
+            hvd.init() 
 
-        tf_config = tf.ConfigProto()
-        tf_config.gpu_options.allow_growth = True
-        tf_config.allow_soft_placement = True
-        device_list =''
-        if self.config.GPU_COUNT == 1:
-            device_list = str(hvd.local_rank())
-        else:
-             device_list = '%d,%d' % (hvd.local_rank() * self.config.GPU_COUNT, hvd.local_rank() * self.config.GPU_COUNT + 1)
+            tf_config = tf.ConfigProto()
+            tf_config.gpu_options.allow_growth = True
+            tf_config.allow_soft_placement = True
+            device_list =''
+            if self.config.GPU_COUNT == 1:
+                device_list = hvd.local_rank()
+            else:
+                device_list = '%d,%d' % (hvd.local_rank() * self.config.GPU_COUNT, hvd.local_rank() * self.config.GPU_COUNT + 1)
 
-        tf_config.gpu_options.visible_device_list = device_list
-        K.set_session(tf.Session(config=tf_config))
+            tf_config.gpu_options.visible_device_list = device_list
+            K.set_session(tf.Session(config=tf_config))
 
         self.keras_model = self.build(mode=mode, config=config)
 
