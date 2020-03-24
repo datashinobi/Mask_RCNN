@@ -1852,7 +1852,7 @@ class MaskRCNN():
         print('visible gpu',tf_config.gpu_options.visible_device_list)
         device_list =''
         if self.config.GPU_COUNT == 1:
-            device_list = str(hvd.local_rank())
+            device_list = str(os.environ['AZ_BATCHAI_TASK_INDEX'])#)str(hvd.local_rank())
         else:
             device_list = '%d,%d' % (hvd.local_rank() * self.config.GPU_COUNT, hvd.local_rank() * self.config.GPU_COUNT + 1)
         
