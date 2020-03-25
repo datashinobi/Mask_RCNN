@@ -1848,7 +1848,7 @@ class MaskRCNN():
         tf_config = tf.ConfigProto()
         tf_config.gpu_options.allow_growth = True
         tf_config.allow_soft_placement = True
-        
+
         if self.config.GPU_COUNT == 1:
             tf_config.gpu_options.visible_device_list = str(hvd.local_rank())
             
@@ -2362,7 +2362,11 @@ class MaskRCNN():
         # Callbacks
         callbacks = [
             hvd.callbacks.BroadcastGlobalVariablesCallback(0),
-            hvd.callbacks.LearningRateWarmupCallback(warmup_epochs=5)
+            hvd.callbacks.LearningRateWarmupCallback(warmup_epochs=5),
+            hvd.callbacks.LearningRateScheduleCallback(start_epoch=args.warmup_epochs, end_epoch=30, multiplier=1.),
+            hvd.callbacks.LearningRateScheduleCallback(start_epoch=30, end_epoch=60, multiplier=1e-1),
+            hvd.callbacks.LearningRateScheduleCallback(start_epoch=60, end_epoch=80, multiplier=1e-2),
+            hvd.callbacks.LearningRateScheduleCallback(start_epoch=80, multiplier=1e-3)
 
         ]
         # Horovod: save checkpoints & write tensorboard logs only on rank 0 
