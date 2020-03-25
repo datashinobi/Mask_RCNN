@@ -2360,7 +2360,7 @@ class MaskRCNN():
 
         # Create log_dir if it does not exist
         if not os.path.exists(self.log_dir):
-            os.makedirs(self.log_dir)
+            os.makedirs(self.log_dir,exist_ok=True)
 
         # Callbacks
         callbacks = [
