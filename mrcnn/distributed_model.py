@@ -2363,7 +2363,7 @@ class MaskRCNN():
         callbacks = [
             hvd.callbacks.BroadcastGlobalVariablesCallback(0),
             hvd.callbacks.LearningRateWarmupCallback(warmup_epochs=5),
-            hvd.callbacks.LearningRateScheduleCallback(start_epoch=args.warmup_epochs, end_epoch=30, multiplier=1.),
+            hvd.callbacks.LearningRateScheduleCallback(start_epoch=5, end_epoch=30, multiplier=1.),
             hvd.callbacks.LearningRateScheduleCallback(start_epoch=30, end_epoch=60, multiplier=1e-1),
             hvd.callbacks.LearningRateScheduleCallback(start_epoch=60, end_epoch=80, multiplier=1e-2),
             hvd.callbacks.LearningRateScheduleCallback(start_epoch=80, multiplier=1e-3)
