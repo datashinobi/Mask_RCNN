@@ -1854,7 +1854,7 @@ class MaskRCNN():
             device_list = str(hvd.local_rank())
             tf_config.gpu_options.visible_device_list = device_list
         '''else:
-            '''device_list = str(hvd.local_rank())#'%d,%d' % (hvd.local_rank() * self.config.GPU_COUNT, hvd.local_rank() * self.config.GPU_COUNT + 1)
+        '''device_list = str(hvd.local_rank())#'%d,%d' % (hvd.local_rank() * self.config.GPU_COUNT, hvd.local_rank() * self.config.GPU_COUNT + 1)
         
         K.set_session(tf.Session(config=tf_config))
 
